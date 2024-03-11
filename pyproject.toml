@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "test-script"
+version = "0.1.0"
+description = ""
+authors = ["Vladimir Katin <katin.v.v@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+minio = "7.2.5"
+requests = "^2.31.0"
+locust = "^2.24.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
