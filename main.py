@@ -59,7 +59,6 @@ def send_random_file_from_disk(path: str, endpoint: str):
     except OSError:
         print("Failed to open path")
         return
-
     file_to_send = random.choice(list_of_files)
     print(f"Selected file: {file_to_send}")
     try:
@@ -69,6 +68,7 @@ def send_random_file_from_disk(path: str, endpoint: str):
             assert response, "Response is empty"
     except OSError:
         print("Failed to open file")
+        return
     if response.status_code == 200:
         print("Success!")
         print(response.text)
@@ -76,18 +76,42 @@ def send_random_file_from_disk(path: str, endpoint: str):
         print("Failed to send the file.")
 
 
+def send_all_files_from_disk(path: str, endpoint: str):
+    try:
+        list_of_files = os.listdir(path)
+    except OSError:
+        print("Failed to open path")
+        return
+    for file_to_send in list_of_files:
+        print(f"Selected file: {file_to_send}")
+        try:
+            with open(path + "/" + file_to_send, 'rb') as file_content:
+                files = {'file': (file_to_send, file_content)}
+                response = requests.post(endpoint, files=files)
+                assert response, "Response is empty"
+        except OSError:
+            print("Failed to open file")
+            return
+        if response.status_code == 200:
+            print("Success!")
+            print(response.text)
+        else:
+            print("Failed to send the file, status code: ", response.status_code)
+
+
 # Example usage
 if __name__ == "__main__":
     ENDPOINT = "https://api.dzailz.su/upload"
     # ENDPOINT = "http://127.0.0.1:8787/upload"
+
 
     def run_minio():
         start_time = time.time()
         bucket_name = "audio"
 
         minio_url = "192.168.111.66:9000"
-        access_key = "1T6fmN8xttey1SG4TXvd"
-        secret_key = "PHFlySjbBJv1I21qjVgI0MD2VfcvxsC4tpKLFTtX"
+        access_key = input("Enter the access key: ")
+        secret_key = input("Enter the secret key: ")
         # Start timing
 
         time.sleep(random.randint(1, 22))
@@ -100,14 +124,19 @@ if __name__ == "__main__":
 
 
     def run_local_files():
-        start_time = time.time()
-        path = f"/home/dzailz/Downloads/golos_opus/train_opus/crowd/{random.choice(range(0, 10))}"
-        send_random_file_from_disk(path=path, endpoint=ENDPOINT)
-        time.sleep(random.randint(1, 33))
-        end_time = time.time()
-        # Calculate and print the duration
-        duration = end_time - start_time
-        print(f"Finished in {duration} seconds")
+        folder_time_start = time.time()
+        for i in range(10):
+            start_time = time.time()
+            path = input("Enter the path to the train 'golos' opus crowd root folder: ")
+            path = path + "/" + str(i)
+            send_all_files_from_disk(path=path, endpoint=ENDPOINT)
+            time.sleep(random.randint(1, 33))
+            end_time = time.time()
+            # Calculate and print the duration
+            duration = end_time - start_time
+            print(f"Finished file in {duration} seconds")
+        folder_time_end = time.time()
+        print(f"Finished folder in {folder_time_end - folder_time_start} seconds")
 
 
     overall_start_time = time.time()
