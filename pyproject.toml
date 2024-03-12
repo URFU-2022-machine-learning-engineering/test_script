@@ -10,6 +10,9 @@ python = "^3.12"
 minio = "7.2.5"
 requests = "^2.31.0"
 locust = "^2.24.0"
+tqdm = "^4.66.2"
+aiohttp = "^3.9.3"
+aiofiles = "^23.2.1"
 
 
 [build-system]
