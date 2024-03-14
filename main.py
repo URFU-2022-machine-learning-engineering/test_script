@@ -1,24 +1,54 @@
 import os
-import requests
-from tqdm import tqdm
+import aiohttp
+import asyncio
+from aiohttp import FormData
+from tqdm.asyncio import tqdm_asyncio as tqdm
 import glob
 import random
-import time
 from datetime import datetime
+import aiofiles
 
 
-def send_file(endpoint, file_name, file_content):
-    files = {'file': (open(file_content, 'rb'))}
-    try:
-        response = requests.post(endpoint, files=files)
-        if response.status_code == 200:
-            print(f"Success! File {file_name} sent. Response: {response.text}")
-        else:
-            print(f"Failed to send the file {file_name}. Status code: {response.status_code}")
-    except requests.RequestException as e:
-        print(f"Request failed for file {file_name}: {e}")
-    finally:
-        files['file'].close()
+async def send_file(session, endpoint, file_name, file_content_path):
+    async with aiofiles.open(file_content_path, 'rb') as file:
+        data = FormData()
+        data.add_field('file', await file.read(), filename=file_name)
+        try:
+            async with session.post(endpoint, data=data) as response:
+                if response.status == 200:
+                    print(f"Success! File {file_name} sent. Response: {await response.text()}")
+                else:
+                    print(f"Failed to send the file {file_name}. Status code: {response.status}")
+        except aiohttp.ClientError as e:
+            print(f"Request failed for file {file_name}: {e}")
+
+
+async def send_random_files(session, endpoint, audio_files, count, sleep_range):
+    for _ in range(count):
+        random_file = random.choice(audio_files)
+        file_name = os.path.basename(random_file)
+        await send_file(session, endpoint, file_name, random_file)
+        await asyncio.sleep(random.randint(*sleep_range))
+
+
+async def send_audio_files(directory: str, endpoint: str):
+    audio_files = [audio_file for audio_file in find_audio_files(directory)]
+    if not audio_files:
+        print("No audio files found in the specified directory.")
+        return
+
+    async with aiohttp.ClientSession() as session:
+        for audio_file in tqdm(audio_files, desc="Sending audio files"):
+            file_name = os.path.basename(audio_file)
+            await send_file(session, endpoint, file_name, audio_file)
+
+            current_hour = datetime.now().hour
+            if 8 <= current_hour < 12:  # Morning
+                print("Sending + 3 random files (It's morning time!)")
+                await send_random_files(session, endpoint, audio_files, 7, (1, 3))
+            elif 18 <= current_hour < 20:  # Evening
+                print("Sending + 2 random files (It's evening time!)")
+                await send_random_files(session, endpoint, audio_files, 5, (2, 4))
 
 
 def find_audio_files(directory: str):
@@ -29,41 +59,7 @@ def find_audio_files(directory: str):
                 yield audio_file
 
 
-def send_random_file(audio_files, endpoint):
-    if audio_files:
-        random_file = random.choice(audio_files)
-        file_name = os.path.basename(random_file)
-        send_file(endpoint, file_name, random_file)
-
-
-def send_audio_files(directory: str, endpoint: str):
-    audio_files = list(find_audio_files(directory))
-    if not audio_files:
-        print("No audio files found in the specified directory.")
-        return
-
-    for audio_file in tqdm(audio_files, desc="Sending audio files"):
-        file_name = os.path.basename(audio_file)
-        send_file(endpoint, file_name, audio_file)
-
-        current_hour = datetime.now().hour
-        if 8 <= current_hour < 12:  # Morning
-            print("Morning time")
-            time.sleep(random.randint(1, 5))  # More frequent requests in the morning
-            send_random_file(audio_files, endpoint)  # Send an additional random file
-        elif 12 <= current_hour < 18:  # Day time (excluding morning and evening)
-            print("Day time")
-            time.sleep(random.randint(6, 10))
-        elif 18 <= current_hour < 20:  # Evening
-            print("Evening time")
-            time.sleep(random.randint(2, 7))  # More frequent requests in the evening
-            send_random_file(audio_files, endpoint)  # Send an additional random file
-        else:  # Night time
-            print("Night time")
-            time.sleep(random.randint(11, 15))  # Less frequent requests at night
-
-
 if __name__ == "__main__":
     ENDPOINT = "https://api.dzailz.su/upload"
     directory = input("Please enter the path to your audio folder: ")
-    send_audio_files(directory, ENDPOINT)
+    asyncio.run(send_audio_files(directory, ENDPOINT))
