@@ -43,12 +43,12 @@ async def send_audio_files(directory: str, endpoint: str):
             await send_file(session, endpoint, file_name, audio_file)
 
             current_hour = datetime.now().hour
-            if 8 <= current_hour < 12:  # Morning
+            if 7 <= current_hour < 12:  # Morning
                 print("Sending + 3 random files (It's morning time!)")
-                await send_random_files(session, endpoint, audio_files, 7, (1, 3))
-            elif 18 <= current_hour < 20:  # Evening
+                await send_random_files(session, endpoint, audio_files, 8, (1, 2))
+            elif 18 <= current_hour < 23:  # Evening
                 print("Sending + 2 random files (It's evening time!)")
-                await send_random_files(session, endpoint, audio_files, 5, (2, 4))
+                await send_random_files(session, endpoint, audio_files, 7, (2, 4))
 
 
 def find_audio_files(directory: str):
