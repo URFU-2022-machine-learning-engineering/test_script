@@ -60,6 +60,6 @@ def find_audio_files(directory: str):
 
 
 if __name__ == "__main__":
-    ENDPOINT = "https://api.dzailz.su/upload"
+    ENDPOINT = input("Please enter the endpoint: ")
     directory = input("Please enter the path to your audio folder: ")
     asyncio.run(send_audio_files(directory, ENDPOINT))
