@@ -1,4 +1,4 @@
-#Audio File Sender
+# Audio File Sender
 
 This repository contains a Python script that sends audio files from a specified directory to a given endpoint using asynchronous HTTP requests. The script utilizes aiohttp for handling asynchronous HTTP operations and aiofiles for asynchronous file handling. Additionally, the script incorporates tqdm for progress display and Poetry for dependency management.
 Features
